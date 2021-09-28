@@ -1,1 +1,3 @@
-# test-arenda-avtomobiley
+- Запустить yarn
+- Запустить yarn docker
+- Запустить yarn start
