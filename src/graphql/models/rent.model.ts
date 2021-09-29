@@ -14,11 +14,11 @@ export class Rent {
   @Field(() => Tariff, { description: 'Тариф' })
   tariff: Tariff;
 
-  @Field(() => Date, { description: 'Дата начала аренды' })
-  start_date: Date;
+  @Field(() => String, { description: 'Дата начала аренды' })
+  start_date: string | Date;
 
-  @Field(() => Date, { description: 'Дата конца аренды' })
-  end_date: Date;
+  @Field(() => String, { description: 'Дата конца аренды' })
+  end_date: string | Date;
 
   @Field(() => Int, { description: 'Цена' })
   price: number;

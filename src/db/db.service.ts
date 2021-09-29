@@ -7,6 +7,7 @@ import {
   getDay,
   setDay,
   subDays,
+  format,
 } from 'date-fns';
 import {
   Inject,
@@ -22,8 +23,12 @@ import { Rent } from '../graphql/models/rent.model';
 import { Tariff } from '../graphql/models/enums.model';
 import { CarInput } from '../graphql/models/car.input.model';
 import { RentInput } from '../graphql/models/rent.input.model';
-import { StatisticsByDay } from 'src/graphql/models/statistics.model';
 import { StatisticsInput } from '../graphql/models/statistics.input.model';
+import {
+  StatisticsByDay,
+  StatisticsByAuto,
+  StatisticsByAllAutos,
+} from '../graphql/models/statistics.model';
 
 @Injectable()
 export class DbService implements OnApplicationBootstrap {
@@ -121,8 +126,8 @@ export class DbService implements OnApplicationBootstrap {
       const [price] = await this.returnPriceCar({
         car: { id: randomCar },
         tariff: randomTariff,
-        start_date,
-        end_date,
+        start_date: format(start_date, 'yyyy-MM-dd'),
+        end_date: format(end_date, 'yyyy-MM-dd'),
       });
 
       await this.insertRent(
@@ -187,7 +192,9 @@ export class DbService implements OnApplicationBootstrap {
       throw new UnprocessableEntityException('Не найдено автомобиля');
     }
 
-    const diff = differenceInDays(rent.end_date, rent.start_date);
+    const start_date = new Date(rent.start_date);
+    const end_date = new Date(rent.end_date);
+    const diff = differenceInDays(end_date, start_date);
     if (diff < 0) {
       throw new UnprocessableEntityException(
         'Неправильно расположены даты, поменяйте пожалуйста',
@@ -200,12 +207,12 @@ export class DbService implements OnApplicationBootstrap {
       );
     }
 
-    if (isSaturday(rent.start_date) || isSunday(rent.start_date)) {
+    if (isSaturday(start_date) || isSunday(start_date)) {
       throw new UnprocessableEntityException(
         'Начало аренды выпадает на субботу или воскресенье',
       );
     }
-    if (isSaturday(rent.end_date) || isSunday(rent.end_date)) {
+    if (isSaturday(end_date) || isSunday(end_date)) {
       throw new UnprocessableEntityException(
         'Конец аренды выпадает на субботу или воскресенье',
       );
@@ -239,11 +246,11 @@ export class DbService implements OnApplicationBootstrap {
 
     if (previousRents) {
       const carRents = await this.selectRental({
-        where: { car_id: car.id },
+        where: { car_id: car.id, start_date, end_date },
         eager: false,
       });
       carRents.forEach((carRent) => {
-        const abs = differenceInDays(rent.start_date, carRent.end_date);
+        const abs = differenceInDays(start_date, new Date(carRent.end_date));
         if (abs < 3) {
           throw new UnprocessableEntityException(
             'Пауза между бронированиями должна составлять 3 дня',
@@ -258,18 +265,24 @@ export class DbService implements OnApplicationBootstrap {
   async insertRent(
     car_id: number,
     tariff: Tariff,
-    start_date: Date,
-    end_date: Date,
+    start_date: string | Date,
+    end_date: string | Date,
     price: number,
   ): Promise<Rent[]> {
     const query = await this.pgClient.query<Rent>(
       `INSERT INTO rental (car_id, tariff, start_date, end_date, price) VALUES ('${car_id}', '${tariff}',` +
-        `'${formatISO(start_date)}', '${formatISO(end_date)}', '${price}'` +
+        `'${new Date(start_date).toISOString()}', '${new Date(
+          end_date,
+        ).toISOString()}', '${price}'` +
         `) RETURNING *`,
     );
     this.log(query);
 
-    return query.rows;
+    return query.rows.map((q) => ({
+      ...q,
+      start_date: format(new Date(q.start_date), 'yyyy-MM-dd'),
+      end_date: format(new Date(q.start_date), 'yyyy-MM-dd'),
+    }));
   }
 
   async selectCars({
@@ -281,12 +294,13 @@ export class DbService implements OnApplicationBootstrap {
   }): Promise<Car[]> {
     let queryResponse = 'SELECT * FROM car';
     if (where) {
-      queryResponse += ' WHERE ';
       const whereArray = [];
       if (where.id) {
         whereArray.push(`id=${where.id}`);
       }
-      queryResponse += whereArray.join(' AND ');
+      if (whereArray.length > 0) {
+        queryResponse += ' WHERE ' + whereArray.join(' AND ');
+      }
     }
 
     const query = await this.pgClient.query<Car>(queryResponse);
@@ -302,14 +316,13 @@ export class DbService implements OnApplicationBootstrap {
     where?: {
       id?: number;
       car_id?: number;
-      start_date?: Date;
-      end_date?: Date;
+      start_date?: string | Date;
+      end_date?: string | Date;
     };
     eager?: boolean;
   }): Promise<Rent[]> {
     let queryResponse = 'SELECT * FROM rental';
     if (where) {
-      queryResponse += ' WHERE ';
       const whereArray = [];
       if (where.id) {
         whereArray.push(`id=${where.id}`);
@@ -318,12 +331,18 @@ export class DbService implements OnApplicationBootstrap {
         whereArray.push(`car_id=${where.car_id}`);
       }
       if (where.start_date) {
-        whereArray.push(`start_date>=${where.start_date}`);
+        whereArray.push(
+          `start_date>='${format(new Date(where.start_date), 'yyyy-MM-dd')}'`,
+        );
       }
       if (where.end_date) {
-        whereArray.push(`end_date<=${where.end_date}`);
+        whereArray.push(
+          `end_date<='${format(new Date(where.end_date), 'yyyy-MM-dd')}'`,
+        );
       }
-      queryResponse += whereArray.join(' AND ');
+      if (whereArray.length > 0) {
+        queryResponse += ' WHERE ' + whereArray.join(' AND ');
+      }
     }
 
     const query = await this.pgClient.query<Rent>(queryResponse);
@@ -334,6 +353,8 @@ export class DbService implements OnApplicationBootstrap {
       for (const rent of query.rows) {
         rents.push({
           ...rent,
+          start_date: format(new Date(rent.start_date), 'yyyy-MM-dd'),
+          end_date: format(new Date(rent.end_date), 'yyyy-MM-dd'),
           car: (await this.selectCars({ where: { id: rent.car_id } }))[0],
         });
       }
@@ -341,22 +362,70 @@ export class DbService implements OnApplicationBootstrap {
       return rents;
     }
 
-    return query.rows;
+    return query.rows.map((q) => ({
+      ...q,
+      start_date: format(new Date(q.start_date), 'yyyy-MM-dd'),
+      end_date: format(new Date(q.end_date), 'yyyy-MM-dd'),
+    }));
   }
 
-  async statisticsByDay(statistics: StatisticsInput): Promise<StatisticsByDay> {
-    throw new UnprocessableEntityException();
+  async statisticsByDay(
+    statistics: StatisticsInput,
+  ): Promise<Array<StatisticsByDay>> {
+    const query = await this.pgClient.query<StatisticsByDay>(
+      `SELECT start_date AS date, car_id FROM rental WHERE start_date >= '${new Date(
+        statistics.start_date,
+      ).toISOString()}' AND end_date <= '${new Date(
+        statistics.end_date,
+      ).toISOString()}' GROUP BY start_date, car_id ORDER BY start_date`,
+    );
+
+    return query.rows.map((s) => ({
+      ...s,
+      date: format(s.date as Date, 'yyyy-MM-dd'),
+      get __typename() {
+        return 'StatisticsByDay';
+      },
+    }));
   }
 
   async statisticsByAuto(
     statistics: StatisticsInput,
-  ): Promise<StatisticsByDay> {
-    throw new UnprocessableEntityException();
+  ): Promise<Array<StatisticsByAuto>> {
+    const query = await this.pgClient.query<StatisticsByDay>(
+      `SELECT start_date AS date, car_id FROM rental WHERE start_date >= '${new Date(
+        statistics.start_date,
+      ).toISOString()}' AND end_date <= '${new Date(
+        statistics.end_date,
+      ).toISOString()}' GROUP BY start_date, car_id ORDER BY start_date`,
+    );
+
+    return query.rows.map((s) => ({
+      ...s,
+      date: format(s.date as Date, 'yyyy-MM-dd'),
+      get __typename() {
+        return 'StatisticsByDay';
+      },
+    }));
   }
 
   async statisticsByAllAutos(
     statistics: StatisticsInput,
-  ): Promise<StatisticsByDay> {
-    throw new UnprocessableEntityException();
+  ): Promise<Array<StatisticsByAllAutos>> {
+    const query = await this.pgClient.query<StatisticsByDay>(
+      `SELECT start_date AS date, car_id FROM rental WHERE start_date >= '${new Date(
+        statistics.start_date,
+      ).toISOString()}' AND end_date <= '${new Date(
+        statistics.end_date,
+      ).toISOString()}' GROUP BY start_date, car_id ORDER BY start_date`,
+    );
+
+    return query.rows.map((s) => ({
+      ...s,
+      date: format(s.date as Date, 'yyyy-MM-dd'),
+      get __typename() {
+        return 'StatisticsByAllAutos';
+      },
+    }));
   }
 }

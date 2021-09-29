@@ -26,8 +26,11 @@ export class GraphqlResolver {
   }
 
   @Query(() => [Rent], { description: 'Вывод всех сессий' })
-  async listRental(): Promise<Rent[]> {
-    return this.graphqlService.listRental();
+  async listRental(
+    @Args('start_date', { nullable: true }) start_date?: string,
+    @Args('end_date', { nullable: true }) end_date?: string,
+  ): Promise<Rent[]> {
+    return this.graphqlService.listRental(start_date, end_date);
   }
 
   @Mutation(() => Rent, { description: 'Создание сессии аренды автомобиля' })
@@ -38,14 +41,14 @@ export class GraphqlResolver {
     return this.graphqlService.bookCarRental(rent);
   }
 
-  @Mutation(() => Statistics, {
+  @Mutation(() => [Statistics], {
     description:
       'Сформировать отчёт средней загрузки автомобилей по дням, по каждому авто и по всем автомобилям.',
   })
   async statistics(
     @Args('statistics', { description: 'Принимаемые параметры для отчета' })
     statistics: StatisticsInput,
-  ): Promise<typeof Statistics> {
+  ): Promise<Array<typeof Statistics>> {
     return this.graphqlService.statistics(statistics);
   }
 }

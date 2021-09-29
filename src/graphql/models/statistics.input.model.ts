@@ -6,9 +6,9 @@ export class StatisticsInput {
   @Field(() => StatisticsBy)
   by: StatisticsBy;
 
-  @Field(() => Date, { nullable: true })
-  start?: Date;
+  @Field(() => String, { nullable: true })
+  start_date?: string;
 
-  @Field(() => Date, { nullable: true })
-  end?: Date;
+  @Field(() => String, { nullable: true })
+  end_date?: string;
 }

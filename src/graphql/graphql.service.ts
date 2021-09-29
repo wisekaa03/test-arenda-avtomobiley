@@ -6,6 +6,7 @@ import { Car } from './models/car.model';
 import { StatisticsInput } from './models/statistics.input.model';
 import { Statistics } from './models/statistics.model';
 import { StatisticsBy } from './models/enums.model';
+import { format } from 'date-fns';
 
 @Injectable()
 export class GraphqlService {
@@ -35,8 +36,8 @@ export class GraphqlService {
     return {
       car,
       tariff: rent.tariff,
-      start_date: rent.start_date,
-      end_date: rent.end_date,
+      start_date: format(new Date(rent.start_date), 'yyyy-MM-dd'),
+      end_date: format(new Date(rent.end_date), 'yyyy-MM-dd'),
       price,
     };
   }
@@ -46,8 +47,8 @@ export class GraphqlService {
    *
    * @returns {Rent[]} Арендованные автомобили
    */
-  async listRental(): Promise<Rent[]> {
-    return this.dbService.selectRental({});
+  async listRental(start_date?: string, end_date?: string): Promise<Rent[]> {
+    return this.dbService.selectRental({ where: { start_date, end_date } });
   }
 
   /**
@@ -61,8 +62,8 @@ export class GraphqlService {
     const rows = await this.dbService.insertRent(
       rental.car.id,
       rental.tariff,
-      rental.start_date,
-      rental.end_date,
+      rental.start_date as Date,
+      rental.end_date as Date,
       rental.price,
     );
     if (!rental) {
@@ -80,7 +81,9 @@ export class GraphqlService {
    *
    * @returns {Statistics} Отчет
    */
-  async statistics(statistics: StatisticsInput): Promise<typeof Statistics> {
+  async statistics(
+    statistics: StatisticsInput,
+  ): Promise<Array<typeof Statistics>> {
     switch (statistics.by) {
       case StatisticsBy.day:
         return this.dbService.statisticsByDay(statistics);

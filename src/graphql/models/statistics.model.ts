@@ -1,21 +1,27 @@
-import { createUnionType, Field, ObjectType } from '@nestjs/graphql';
+import { createUnionType, Field, Int, ObjectType } from '@nestjs/graphql';
 
 @ObjectType()
 export class StatisticsByDay {
-  @Field()
-  what: string;
+  @Field(() => String)
+  date: string | Date;
+
+  @Field(() => Int)
+  car_id: number;
 }
 
 @ObjectType()
 export class StatisticsByAuto {
-  @Field()
-  what: string;
+  @Field(() => String)
+  date: string | Date;
 }
 
 @ObjectType()
 export class StatisticsByAllAutos {
-  @Field()
-  what: string;
+  @Field(() => String)
+  date: string | Date;
+
+  @Field(() => Int)
+  car_id: number;
 }
 
 export const Statistics = createUnionType({
