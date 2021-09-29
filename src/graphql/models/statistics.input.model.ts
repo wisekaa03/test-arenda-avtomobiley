@@ -1,10 +1,5 @@
 import { InputType, Field } from '@nestjs/graphql';
-
-export enum StatisticsBy {
-  day = 'day',
-  auto = 'auto',
-  allAutos = 'allAutos',
-}
+import { StatisticsBy } from './enums.model';
 
 @InputType()
 export class StatisticsInput {
@@ -12,8 +7,8 @@ export class StatisticsInput {
   by: StatisticsBy;
 
   @Field(() => Date, { nullable: true })
-  startDate?: Date;
+  start?: Date;
 
   @Field(() => Date, { nullable: true })
-  endDate?: Date;
+  end?: Date;
 }

@@ -1,3 +1,4 @@
 - Запустить yarn
+- Скопировать .env.example в .env
 - Запустить yarn docker
 - Запустить yarn start

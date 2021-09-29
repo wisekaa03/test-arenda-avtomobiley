@@ -2,7 +2,7 @@ import { Args, Mutation, Query, Resolver } from '@nestjs/graphql';
 import { GraphqlService } from './graphql.service';
 import { Rent } from './models/rent.model';
 import { Car } from './models/car.model';
-import { CarInput } from './models/car.input.model';
+import { RentInput } from './models/rent.input.model';
 import { StatisticsInput } from './models/statistics.input.model';
 import { Statistics } from './models/statistics.model';
 
@@ -16,18 +16,18 @@ export class GraphqlResolver {
   }
 
   @Query(() => Rent)
-  async calculateLease(@Args('car') car: CarInput): Promise<Rent> {
-    return this.graphqlService.calculateLease(car);
+  async calculateLease(@Args('rent') rent: RentInput): Promise<Rent> {
+    return this.graphqlService.calculateLease(rent);
+  }
+
+  @Query(() => [Rent])
+  async listRental(): Promise<Rent[]> {
+    return this.graphqlService.listRental();
   }
 
   @Mutation(() => Rent)
-  async bookCarRental(@Args('car') car: CarInput): Promise<Rent> {
-    return this.graphqlService.bookCarRental(car);
-  }
-
-  @Mutation(() => Rent)
-  async deleteCarRental(@Args('car') car: CarInput): Promise<Rent> {
-    return this.graphqlService.deleteCarRental(car);
+  async bookCarRental(@Args('rent') rent: RentInput): Promise<Rent> {
+    return this.graphqlService.bookCarRental(rent);
   }
 
   @Mutation(() => Statistics)
