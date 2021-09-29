@@ -22,6 +22,10 @@
     "docker": "docker-compose -p test-rent-car -f docker/docker-compose.yml up -d",
     "docker:down": "docker-compose -p test-rent-car -f docker/docker-compose.yml down --rmi local --volumes"
   },
+  "engines": {
+    "node": "^16",
+    "npm": "^7"
+  },
   "dependencies": {
     "@apollo/gateway": "^0.42.0",
     "@nestjs/common": "^8.0.8",
