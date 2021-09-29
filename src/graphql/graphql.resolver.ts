@@ -17,7 +17,7 @@ export class GraphqlResolver {
 
   @Query(() => Rent)
   async calculateLease(@Args('rent') rent: RentInput): Promise<Rent> {
-    return this.graphqlService.calculateLease(rent);
+    return this.graphqlService.calculateLease(rent, false);
   }
 
   @Query(() => [Rent])

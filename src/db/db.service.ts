@@ -96,7 +96,7 @@ export class DbService implements OnApplicationBootstrap {
     );
 
     // Fill rent
-    const cars = await this.selectCars();
+    const cars = await this.selectCars({});
     [...Array(100).keys()].forEach(async () => {
       const randomCar = cars[Math.floor(Math.random() * (cars.length - 1))].id;
       const randomTariff =
@@ -238,6 +238,7 @@ export class DbService implements OnApplicationBootstrap {
     if (previousRents) {
       const carRents = await this.selectRental({
         where: { car_id: car.id },
+        eager: false,
       });
       carRents.forEach((carRent) => {
         const abs = differenceInDays(rent.start_date, carRent.end_date);
@@ -269,8 +270,24 @@ export class DbService implements OnApplicationBootstrap {
     return query.rows;
   }
 
-  async selectCars(): Promise<Car[]> {
-    const query = await this.pgClient.query<Car>(`SELECT * FROM car`);
+  async selectCars({
+    where,
+  }: {
+    where?: {
+      id?: number;
+    };
+  }): Promise<Car[]> {
+    let queryResponse = 'SELECT * FROM car';
+    if (where) {
+      queryResponse += ' WHERE ';
+      const whereArray = [];
+      if (where.id) {
+        whereArray.push(`id=${where.id}`);
+      }
+      queryResponse += whereArray.join(' AND ');
+    }
+
+    const query = await this.pgClient.query<Car>(queryResponse);
     this.log(query);
 
     return query.rows;
@@ -278,6 +295,7 @@ export class DbService implements OnApplicationBootstrap {
 
   async selectRental({
     where,
+    eager = true,
   }: {
     where?: {
       id?: number;
@@ -285,9 +303,9 @@ export class DbService implements OnApplicationBootstrap {
       start_date?: Date;
       end_date?: Date;
     };
+    eager?: boolean;
   }): Promise<Rent[]> {
-    let queryResponse =
-      'SELECT * FROM rental LEFT JOIN car ON car.id = rental.car_id';
+    let queryResponse = 'SELECT * FROM rental';
     if (where) {
       queryResponse += ' WHERE ';
       const whereArray = [];
@@ -308,6 +326,18 @@ export class DbService implements OnApplicationBootstrap {
 
     const query = await this.pgClient.query<Rent>(queryResponse);
     this.log(query);
+
+    if (eager) {
+      const rents: Rent[] = [];
+      for (const rent of query.rows) {
+        rents.push({
+          ...rent,
+          car: (await this.selectCars({ where: { id: rent.car_id } }))[0],
+        });
+      }
+
+      return rents;
+    }
 
     return query.rows;
   }

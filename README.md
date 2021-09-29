@@ -2,3 +2,4 @@
 - Скопировать .env.example в .env
 - Запустить yarn docker
 - Запустить yarn start
+- Заходите на http://localhost:3000/graphql

@@ -22,7 +22,7 @@ export class GraphqlService {
    * @returns {Car[]} Автомобили
    */
   async listCars(): Promise<Car[]> {
-    return this.dbService.selectCars();
+    return this.dbService.selectCars({});
   }
 
   /**
@@ -61,7 +61,7 @@ export class GraphqlService {
    * @returns {Rent} Аренда автомобиля
    */
   async bookCarRental(rent: RentInput): Promise<Rent> {
-    const rental = await this.calculateLease(rent, false);
+    const rental = await this.calculateLease(rent);
 
     const rows = await this.dbService.insertRent(
       rental.car.id,
