@@ -22,6 +22,8 @@ import { Rent } from '../graphql/models/rent.model';
 import { Tariff } from '../graphql/models/enums.model';
 import { CarInput } from '../graphql/models/car.input.model';
 import { RentInput } from '../graphql/models/rent.input.model';
+import { StatisticsByDay } from 'src/graphql/models/statistics.model';
+import { StatisticsInput } from '../graphql/models/statistics.input.model';
 
 @Injectable()
 export class DbService implements OnApplicationBootstrap {
@@ -340,5 +342,21 @@ export class DbService implements OnApplicationBootstrap {
     }
 
     return query.rows;
+  }
+
+  async statisticsByDay(statistics: StatisticsInput): Promise<StatisticsByDay> {
+    throw new UnprocessableEntityException();
+  }
+
+  async statisticsByAuto(
+    statistics: StatisticsInput,
+  ): Promise<StatisticsByDay> {
+    throw new UnprocessableEntityException();
+  }
+
+  async statisticsByAllAutos(
+    statistics: StatisticsInput,
+  ): Promise<StatisticsByDay> {
+    throw new UnprocessableEntityException();
   }
 }

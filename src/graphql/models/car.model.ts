@@ -1,19 +1,19 @@
 import { Field, ID, ObjectType } from '@nestjs/graphql';
 
-@ObjectType()
+@ObjectType({ description: 'Аффтабамиль!' })
 export class Car {
-  @Field(() => ID)
+  @Field(() => ID, { description: 'ID машины' })
   id: number;
 
-  @Field(() => String)
+  @Field(() => String, { description: 'Марка' })
   brand: string;
 
-  @Field(() => String)
+  @Field(() => String, { description: 'Модель' })
   model: string;
 
-  @Field(() => String)
+  @Field(() => String, { description: 'Государственный номер' })
   licenseplate: string;
 
-  @Field(() => String)
+  @Field(() => String, { description: 'VIN' })
   vin: string;
 }

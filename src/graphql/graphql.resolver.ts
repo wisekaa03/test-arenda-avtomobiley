@@ -10,29 +10,41 @@ import { Statistics } from './models/statistics.model';
 export class GraphqlResolver {
   constructor(private readonly graphqlService: GraphqlService) {}
 
-  @Query(() => [Car])
+  @Query(() => [Car], { description: 'Вывод всех автомобилей' })
   async listCars(): Promise<Car[]> {
     return this.graphqlService.listCars();
   }
 
-  @Query(() => Rent)
-  async calculateLease(@Args('rent') rent: RentInput): Promise<Rent> {
+  @Query(() => Rent, {
+    description: 'Расчёт стоимости аренды автомобиля за период',
+  })
+  async calculateLease(
+    @Args('rent', { description: 'Принимаемые параметры для вывода' })
+    rent: RentInput,
+  ): Promise<Rent> {
     return this.graphqlService.calculateLease(rent, false);
   }
 
-  @Query(() => [Rent])
+  @Query(() => [Rent], { description: 'Вывод всех сессий' })
   async listRental(): Promise<Rent[]> {
     return this.graphqlService.listRental();
   }
 
-  @Mutation(() => Rent)
-  async bookCarRental(@Args('rent') rent: RentInput): Promise<Rent> {
+  @Mutation(() => Rent, { description: 'Создание сессии аренды автомобиля' })
+  async bookCarRental(
+    @Args('rent', { description: 'Принимаемые параметры для вывода' })
+    rent: RentInput,
+  ): Promise<Rent> {
     return this.graphqlService.bookCarRental(rent);
   }
 
-  @Mutation(() => Statistics)
+  @Mutation(() => Statistics, {
+    description:
+      'Сформировать отчёт средней загрузки автомобилей по дням, по каждому авто и по всем автомобилям.',
+  })
   async statistics(
-    @Args('statistics') statistics: StatisticsInput,
+    @Args('statistics', { description: 'Принимаемые параметры для отчета' })
+    statistics: StatisticsInput,
   ): Promise<typeof Statistics> {
     return this.graphqlService.statistics(statistics);
   }

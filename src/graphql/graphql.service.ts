@@ -1,16 +1,11 @@
-import {
-  Injectable,
-  NotImplementedException,
-  UnprocessableEntityException,
-} from '@nestjs/common';
-import { isSaturday, isSunday, differenceInDays } from 'date-fns';
+import { Injectable, UnprocessableEntityException } from '@nestjs/common';
 import { DbService } from '../db/db.service';
 import { Rent } from './models/rent.model';
 import { RentInput } from './models/rent.input.model';
 import { Car } from './models/car.model';
 import { StatisticsInput } from './models/statistics.input.model';
 import { Statistics } from './models/statistics.model';
-import { Tariff } from './models/enums.model';
+import { StatisticsBy } from './models/enums.model';
 
 @Injectable()
 export class GraphqlService {
@@ -26,7 +21,7 @@ export class GraphqlService {
   }
 
   /**
-   * Произвести расчёт стоимости аренды автомобиля за период
+   * Расчёт стоимости аренды автомобиля за период
    *
    * @param {RentInput} rent
    * @returns {Rent} Расчет стоимости
@@ -80,7 +75,20 @@ export class GraphqlService {
     };
   }
 
+  /**
+   * Вывод отчета
+   *
+   * @returns {Statistics} Отчет
+   */
   async statistics(statistics: StatisticsInput): Promise<typeof Statistics> {
-    throw new NotImplementedException();
+    switch (statistics.by) {
+      case StatisticsBy.day:
+        return this.dbService.statisticsByDay(statistics);
+      case StatisticsBy.auto:
+        return this.dbService.statisticsByAuto(statistics);
+      case StatisticsBy.allAutos:
+      default:
+        return this.dbService.statisticsByAllAutos(statistics);
+    }
   }
 }

@@ -20,5 +20,6 @@ export class StatisticsByAllAutos {
 
 export const Statistics = createUnionType({
   name: 'Statistics',
+  description: 'Отчёт',
   types: () => [StatisticsByDay, StatisticsByAuto, StatisticsByAllAutos],
 });
