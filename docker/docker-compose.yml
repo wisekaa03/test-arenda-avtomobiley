@@ -33,7 +33,7 @@ services:
   pgadmin4:
     networks:
       - test_rent_car
-    image: dpage/pgadmin4:5.7
+    image: dpage/pgadmin4:6.21
     restart: always
     environment:
       PGADMIN_LISTEN_PORT: 8080
